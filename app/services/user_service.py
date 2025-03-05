@@ -1,5 +1,5 @@
-from app.models.user import User
-from app.db.execute_query import execute_query
+from app.models import User
+from app.db import execute_query
 
 class UserService:
     @staticmethod
