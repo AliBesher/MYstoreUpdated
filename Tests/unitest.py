@@ -9,13 +9,13 @@ import hmac
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import modules to test
-from app.models.furniture import Furniture, Chair, Table, Sofa, Bed, Cabinet, FurnitureFactory
-from app.models.user import User
-from app.models.cart import Cart
-from app.models.order import Order
-from app.models.order_item import OrderItem
-from app.models.category import Category
-from app.services.cart_service import CartService, PercentageDiscount, BuyOneGetOneDiscount, BulkDiscount
+from app.models import Furniture, Chair, Table, Sofa, Bed, Cabinet, FurnitureFactory
+from app.models import User
+from app.models import Cart
+from app.models import Order
+from app.models import OrderItem
+from app.models import Category
+from app.services import CartService, PercentageDiscount, BuyOneGetOneDiscount, BulkDiscount
 
 # Mock the execute_query function to avoid actual database calls
 def mock_execute_query(query, params=None, fetch=False):
