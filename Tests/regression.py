@@ -8,17 +8,17 @@ from unittest.mock import patch, MagicMock, call
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import services and models for testing
-from app.services.user_service import UserService
-from app.services.product_service import ProductService
-from app.services.cart_service import CartService
-from app.services.order_service import OrderService
-from app.services.checkout_service import CheckoutService, OrderSubject, EmailNotification, InventoryUpdate
-from app.models.furniture import Furniture, Chair, Table
-from app.models.user import User
-from app.models.cart import Cart
-from app.models.order import Order
-from app.models.order_item import OrderItem
-from app.db.execute_query import execute_query
+from app.services import UserService
+from app.services import ProductService
+from app.services import CartService
+from app.services import OrderService
+from app.services import CheckoutService, OrderSubject, EmailNotification, InventoryUpdate
+from app.models import Furniture, Chair, Table
+from app.models import User
+from app.models import Cart
+from app.models import Order
+from app.models import OrderItem
+from app.db import execute_query
 
 class RegressionTests(unittest.TestCase):
     """
