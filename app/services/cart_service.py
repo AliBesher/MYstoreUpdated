@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from app.db.execute_query import execute_query
-from app.models.cart import Cart
-from app.models.furniture import Furniture
+from app.db import execute_query
+from app.models import Cart
+from app.models import Furniture
 
 
 # Strategy Pattern for discount calculation
