@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from app.services.cart_service import CartService
-from app.models.order import Order
-from app.models.order_item import OrderItem
-from app.models.furniture import Furniture
-from app.db.execute_query import execute_query
+from app.services import CartService
+from app.models import Order
+from app.models import OrderItem
+from app.models import Furniture
+from app.db import execute_query
 
 
 # Observer Pattern for order notifications
