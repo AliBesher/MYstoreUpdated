@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.db.execute_query import execute_query
+from app.db import execute_query
 
 
 class Furniture(ABC):
