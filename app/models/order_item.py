@@ -1,4 +1,4 @@
-from app.db.execute_query import execute_query
+from app.db import execute_query
 
 
 class OrderItem:
