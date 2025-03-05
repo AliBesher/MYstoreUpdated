@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.services.checkout_service import CheckoutService
+from app.services import CheckoutService
 
 checkout_routes = Blueprint('checkout_routes', __name__)
 
