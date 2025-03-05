@@ -10,13 +10,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Import Flask app
 from main import app
-from app.services.user_service import UserService
-from app.services.product_service import ProductService
-from app.services.cart_service import CartService
-from app.services.order_service import OrderService
-from app.services.checkout_service import CheckoutService
-from app.models.furniture import Chair, Table, Sofa, Bed, Cabinet
-from app.db.execute_query import execute_query
+from app.services import UserService
+from app.services import ProductService
+from app.services import CartService
+from app.services import OrderService
+from app.services import CheckoutService
+from app.models import Chair, Table, Sofa, Bed, Cabinet
+from app.db import execute_query
 
 # Create a test client
 class IntegrationTests(unittest.TestCase):
