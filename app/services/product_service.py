@@ -1,4 +1,4 @@
-from app.models.furniture import FurnitureFactory, Furniture
+from app.models import FurnitureFactory, Furniture
 
 class ProductService:
     @staticmethod
