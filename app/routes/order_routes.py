@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.services import OrderService
+from app.models.order import Order
 
 order_routes = Blueprint('order_routes', __name__)
 
@@ -9,8 +10,13 @@ def create_order():
     data = request.get_json()
     user_id = data.get('user_id')
 
+    if not user_id:
+        return jsonify({"message": "⚠️ User ID is required."}), 400
+
     result = OrderService.create_order(user_id)
-    if "⚠️" in result:  # If there's an error
+
+    # Check if there's an error
+    if result and "⚠️" in result:
         return jsonify({"message": result}), 400
 
     return jsonify({"message": result}), 201
@@ -19,21 +25,38 @@ def create_order():
 @order_routes.route('/orders/<int:order_id>/status', methods=['PUT'])
 def update_order_status(order_id):
     data = request.get_json()
-    status = data.get('status')  # New order status (e.g., "processing", "completed")
+    status = data.get('status')
+
+    if not status:
+        return jsonify({"message": "⚠️ Status is required."}), 400
 
     result = OrderService.update_order_status(order_id, status)
+
+    # Check if there's an error
+    if result and "⚠️" in result:
+        return jsonify({"message": result}), 400
+
     return jsonify({"message": result}), 200
 
 # Delete order
 @order_routes.route('/orders/<int:order_id>', methods=['DELETE'])
 def delete_order(order_id):
     result = OrderService.delete_order(order_id)
+
+    # Check if there's an error
+    if result and "⚠️" in result:
+        return jsonify({"message": result}), 400
+
     return jsonify({"message": result}), 200
 
 # Get user's orders
 @order_routes.route('/orders', methods=['GET'])
 def view_orders():
-    user_id = request.args.get('user_id')  # Get user_id from query parameter
+    user_id = request.args.get('user_id')
+
+    if not user_id:
+        return jsonify({"message": "⚠️ User ID is required."}), 400
+
     orders = OrderService.get_order_by_user(user_id)
 
     if not orders:
@@ -45,14 +68,13 @@ def view_orders():
 @order_routes.route('/orders/<int:order_id>', methods=['GET'])
 def get_order(order_id):
     order = OrderService.get_order_by_id(order_id)
-    
+
     if not order:
         return jsonify({"message": "⚠️ Order not found."}), 404
-    
+
     # Get order items
-    from app.models.order import Order
     order_items = Order.get_order_items(order_id)
-    
+
     return jsonify({
         "order": order,
         "items": order_items
