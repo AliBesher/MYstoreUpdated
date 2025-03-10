@@ -138,8 +138,7 @@ class User:
         return None
 
 
-
-    # إضافة هذه الدالة في نموذج User في app/models/user.py
+    # Add this function in the User model in app/models/user.py
 
     @staticmethod
     def reset_password(user_id, new_password):
@@ -149,13 +148,13 @@ class User:
         if not user:
             return False
 
-        # إنشاء salt جديد
+        # Create a new salt
         salt = os.urandom(32).hex()
 
-        # تشفير كلمة المرور الجديدة
+        # Encrypt new password
         hashed_password = User._hash_password(new_password, salt)
 
-        # تحديث كلمة المرور في قاعدة البيانات
+        # Update password in database
         query = """
         UPDATE Users
         SET Password = ?, Salt = ?
