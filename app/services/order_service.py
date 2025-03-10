@@ -1,9 +1,9 @@
 from app.models import Order
 from app.models import OrderItem
 from app.models import Furniture
-from app.services import CartService
+from app.services.cart_service import CartService
 from app.db import execute_query
-from app.services import OrderSubject
+from app.services.checkout_service import OrderSubject
 
 
 class OrderService:
@@ -29,6 +29,9 @@ class OrderService:
         order = Order(user_id, total_amount)
         order_id = order.add_order()  # Add order to database
 
+        if not order_id:
+            return "⚠️ Failed to create order."
+
         # 4. Add order items
         for item in cart_items:
             product_id = item['ProductID']
@@ -45,7 +48,7 @@ class OrderService:
 
         # 6. Clear the cart
         CartService.clear_cart(user_id)
-        
+
         # 7. Notify observers
         OrderSubject.notify(order_id, user_id, total_amount, "pending")
 
@@ -56,18 +59,28 @@ class OrderService:
         """
         Update order status.
         """
+        # Check if order exists
+        existing_order = Order.get_order_by_id(order_id)
+        if not existing_order:
+            return f"⚠️ Order #{order_id} not found."
+
+        # Valid statuses
+        valid_statuses = ["pending", "processing", "shipped", "delivered", "cancelled"]
+        if status not in valid_statuses:
+            return f"⚠️ Invalid status. Must be one of: {', '.join(valid_statuses)}"
+
         # Update order status
         Order.update_order_status(order_id, status)
-        
+
         # Get order details for notification
         order = Order.get_order_by_id(order_id)
-        
+
         if not order:
             return "⚠️ Order not found."
-            
+
         # Notify observers
         OrderSubject.notify(order_id, order['UserID'], order['TotalAmount'], status)
-        
+
         return f"Order #{order_id} status updated to {status}."
 
     @staticmethod
@@ -77,14 +90,14 @@ class OrderService:
         """
         # Get order details before deletion for notification
         order = Order.get_order_by_id(order_id)
-        
+
         if not order:
             return "⚠️ Order not found."
-            
+
         # Create Order object and delete
         order_obj = Order(order['UserID'], order['TotalAmount'], order['Status'])
         order_obj.delete_order(order_id)
-        
+
         return f"Order #{order_id} deleted successfully."
 
     @staticmethod
