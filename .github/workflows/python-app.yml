@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  # استخدم نفس إصدار بايثون الذي تستخدمه محليًا
+          python-version: '3.10'
 
       - name: Install System Dependencies
         run: |
@@ -32,23 +32,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set PYTHONPATH
+      - name: Ensure PYTHONPATH is set
         run: echo "PYTHONPATH=$(pwd):$(pwd)/app" >> $GITHUB_ENV
 
-      - name: Verify Environment
+      - name: Run Unittest with Correct PYTHONPATH
         run: |
-          echo "Python Version: $(python --version)"
-          echo "Installed Packages:"
-          pip list
-          echo "Current Directory: $(pwd)"
-          echo "Directory Structure:"
-          ls -R
-          echo "PYTHONPATH: $PYTHONPATH"
-
-      - name: Run Unittest (individual file execution)
-        run: |
-          python -m unittest tests.regression
-          python -m unittest discover -s tests/unittests -p "*.py"
+          export PYTHONPATH=$(pwd):$(pwd)/app
+          python -m unittest discover -s tests -p "regression_test.py"
 
       - name: Run Pytest with Coverage
-        run: pytest tests/ --cov=app --cov-report=term-missing --disable-warnings
+        run: |
+          export PYTHONPATH=$(pwd):$(pwd)/app
+          pytest tests/ --cov=app --cov-report=term-missing --disable-warnings
