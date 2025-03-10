@@ -64,7 +64,7 @@ class Furniture(ABC):
             "furniture_type": self.get_furniture_type()
         }
 
-        # إضافة خصائص محددة حسب نوع الأثاث
+        # Add specific properties according to the type of furniture
         if self.get_furniture_type() == "Chair":
             result.update({
                 "max_weight_capacity": getattr(self, 'max_weight_capacity', None),
