@@ -6,38 +6,38 @@ import uuid
 
 class User:
     """User class with enhanced security features."""
-    
+
     def __init__(self, name, email, password, role="customer"):
         self.name = name
         self.email = email
         self.password = password  # Plain text password (temporary)
         self.role = role
-        
+
     def add_user(self):
         """Add a new user with hashed password."""
         # Generate a random salt
         salt = os.urandom(32).hex()
-        
+
         # Hash the password with the salt
         hashed_password = self._hash_password(self.password, salt)
-        
+
         query = """
         INSERT INTO Users (Name, Email, Password, Salt, Role, CreatedAt)
         VALUES (?, ?, ?, ?, ?, GETDATE())
         """
         execute_query(query, (self.name, self.email, hashed_password, salt, self.role))
         print(f"User '{self.name}' added successfully.")
-        
+
     def update_user(self, user_id):
         """Update user information."""
         # Check if password has changed
         current_user = User.get_user_by_id(user_id)
-        
+
         if current_user and self.password:
             # Password is being updated, generate new salt and hash
             salt = os.urandom(32).hex()
             hashed_password = self._hash_password(self.password, salt)
-            
+
             query = """
             UPDATE Users
             SET Name = ?, Email = ?, Password = ?, Salt = ?, Role = ?
@@ -52,31 +52,31 @@ class User:
             WHERE UserID = ?
             """
             execute_query(query, (self.name, self.email, self.role, user_id))
-            
+
         print(f"User '{self.name}' updated successfully.")
-        
+
     def delete_user(self, user_id):
         """Delete a user."""
         query = "DELETE FROM Users WHERE UserID = ?"
         execute_query(query, (user_id,))
         print(f"User deleted successfully.")
-        
+
     @staticmethod
     def _hash_password(password, salt):
         """Hash a password with the given salt using SHA-256."""
         # Combine password and salt, then hash
-        salted_password = password.encode('utf-8') + bytes.fromhex(salt)
-        hashed = hashlib.sha256(salted_password).hexdigest()
-        return hashed
-        
+        salted_password = password.encode('utf-8') + salt.encode('utf-8')
+        calculated_hash = hashlib.sha256(salted_password).hexdigest()
+        return calculated_hash
+
     @staticmethod
-    def verify_password(password, hashed_password, salt):
+    def verify_password(input_password, stored_password, salt):
         """Verify a password against a hash."""
         # Hash the input password with the same salt
-        calculated_hash = User._hash_password(password, salt)
+        calculated_hash = User._hash_password(input_password, salt)
         # Compare the calculated hash with the stored hash
-        return calculated_hash == hashed_password
-        
+        return calculated_hash == stored_password
+
     @staticmethod
     def get_user_by_id(user_id):
         """Get user by ID."""
@@ -85,7 +85,7 @@ class User:
         if result:
             return result[0]
         return None
-        
+
     @staticmethod
     def get_user_by_email(email):
         """Get user by email."""
@@ -94,34 +94,34 @@ class User:
         if result:
             return result[0]
         return None
-        
+
     @staticmethod
     def authenticate(email, password):
         """Authenticate a user by email and password."""
         user = User.get_user_by_email(email)
-        
+
         if not user:
             return None
-            
+
         if User.verify_password(password, user['Password'], user['Salt']):
             return user
-            
+
         return None
-        
+
     @staticmethod
     def generate_auth_token(user_id):
         """Generate authentication token for user."""
         token = str(uuid.uuid4())
         expiry = "DATEADD(hour, 24, GETDATE())"  # Token expires in 24 hours
-        
+
         query = """
         INSERT INTO AuthTokens (UserID, Token, ExpiresAt, CreatedAt)
         VALUES (?, ?, {}, GETDATE())
         """.format(expiry)
-        
+
         execute_query(query, (user_id, token))
         return token
-        
+
     @staticmethod
     def validate_auth_token(token):
         """Validate an authentication token."""
@@ -131,11 +131,38 @@ class User:
         JOIN Users u ON t.UserID = u.UserID
         WHERE t.Token = ? AND t.ExpiresAt > GETDATE()
         """
-        
+
         result = execute_query(query, (token,), fetch=True)
         if result:
             return result[0]
         return None
+
+
+
+    # إضافة هذه الدالة في نموذج User في app/models/user.py
+
+    @staticmethod
+    def reset_password(user_id, new_password):
+
+        """إعادة تعيين كلمة مرور المستخدم"""
+        user = User.get_user_by_id(user_id)
+        if not user:
+            return False
+
+        # إنشاء salt جديد
+        salt = os.urandom(32).hex()
+
+        # تشفير كلمة المرور الجديدة
+        hashed_password = User._hash_password(new_password, salt)
+
+        # تحديث كلمة المرور في قاعدة البيانات
+        query = """
+        UPDATE Users
+        SET Password = ?, Salt = ?
+        WHERE UserID = ?
+        """
+        execute_query(query, (hashed_password, salt, user_id))
+        return True
 
 
 def view_users():
