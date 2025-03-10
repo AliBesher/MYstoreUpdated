@@ -4,7 +4,7 @@ from app.db import execute_query
 
 class Furniture(ABC):
     """Base abstract class for all furniture items."""
-    
+
     def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url):
         self.name = name
         self.description = description
@@ -13,7 +13,7 @@ class Furniture(ABC):
         self.stock_quantity = stock_quantity
         self.category_id = category_id
         self.image_url = image_url
-        
+
     def add_furniture(self):
         """Add furniture to the database."""
         query = """
@@ -21,16 +21,16 @@ class Furniture(ABC):
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
         """
         execute_query(query, (
-            self.name, 
-            self.description, 
-            self.price, 
-            self.dimensions, 
-            self.stock_quantity, 
-            self.category_id, 
+            self.name,
+            self.description,
+            self.price,
+            self.dimensions,
+            self.stock_quantity,
+            self.category_id,
             self.image_url,
             self.get_furniture_type()
         ))
-        
+
     def update_furniture(self, furniture_id):
         """Update furniture in the database."""
         query = """
@@ -40,43 +40,90 @@ class Furniture(ABC):
         WHERE ProductID = ?
         """
         execute_query(query, (
-            self.name, 
-            self.description, 
-            self.price, 
-            self.dimensions, 
-            self.stock_quantity, 
-            self.category_id, 
+            self.name,
+            self.description,
+            self.price,
+            self.dimensions,
+            self.stock_quantity,
+            self.category_id,
             self.image_url,
             self.get_furniture_type(),
             furniture_id
         ))
-        
+
+    def to_dict(self):
+        result = {
+            "id": getattr(self, 'id', None),
+            "name": self.name,
+            "description": self.description,
+            "price": float(self.price),
+            "dimensions": self.dimensions,
+            "stock_quantity": self.stock_quantity,
+            "category_id": self.category_id,
+            "image_url": self.image_url,
+            "furniture_type": self.get_furniture_type()
+        }
+
+        # إضافة خصائص محددة حسب نوع الأثاث
+        if self.get_furniture_type() == "Chair":
+            result.update({
+                "max_weight_capacity": getattr(self, 'max_weight_capacity', None),
+                "has_armrests": getattr(self, 'has_armrests', None),
+                "is_adjustable": getattr(self, 'is_adjustable', None)
+            })
+        elif self.get_furniture_type() == "Table":
+            result.update({
+                "shape": getattr(self, 'shape', None),
+                "max_weight_capacity": getattr(self, 'max_weight_capacity', None),
+                "is_extendable": getattr(self, 'is_extendable', None)
+            })
+        elif self.get_furniture_type() == "Sofa":
+            result.update({
+                "seats": getattr(self, 'seats', None),
+                "is_convertible": getattr(self, 'is_convertible', None),
+                "has_storage": getattr(self, 'has_storage', None)
+            })
+        elif self.get_furniture_type() == "Bed":
+            result.update({
+                "bed_size": getattr(self, 'bed_size', None),
+                "has_storage": getattr(self, 'has_storage', None),
+                "material_type": getattr(self, 'material_type', None)
+            })
+        elif self.get_furniture_type() == "Cabinet":
+            result.update({
+                "num_drawers": getattr(self, 'num_drawers', None),
+                "num_shelves": getattr(self, 'num_shelves', None),
+                "has_lock": getattr(self, 'has_lock', None)
+            })
+
+        return result
+
     @staticmethod
     def delete_furniture(furniture_id):
         """Delete furniture from the database."""
         query = "DELETE FROM Products WHERE ProductID = ?"
         execute_query(query, (furniture_id,))
-        
+
     @abstractmethod
     def get_furniture_type(self):
         """Return the type of furniture."""
         pass
-        
+
     @abstractmethod
     def calculate_discount(self, discount_percentage):
         """Calculate discount based on furniture type."""
         pass
-        
+
     @staticmethod
     def get_furniture_by_id(furniture_id):
         """Get furniture by ID."""
         query = "SELECT * FROM Products WHERE ProductID = ?"
         result = execute_query(query, (furniture_id,), fetch=True)
-        
+
         if result:
             row = result[0]
             furniture_type = row['FurnitureType']
-            
+
             # Use Factory Pattern to create appropriate furniture object
             return FurnitureFactory.create_furniture(
                 furniture_type,
@@ -89,9 +136,9 @@ class Furniture(ABC):
                 row['ImageURL'],
                 row  # Pass the entire row for additional attributes
             )
-            
+
         return None
-    
+
     @staticmethod
     def update_stock(furniture_id, quantity):
         """Update furniture stock."""
@@ -104,21 +151,22 @@ class Furniture(ABC):
         print(f"Stock updated for product {furniture_id}.")
 
 
+
 class Chair(Furniture):
     """Chair furniture type."""
-    
-    def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url, 
+
+    def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url,
                  max_weight_capacity=100, has_armrests=True, is_adjustable=False):
         super().__init__(name, description, price, dimensions, stock_quantity, category_id, image_url)
         self.max_weight_capacity = max_weight_capacity
         self.has_armrests = has_armrests
         self.is_adjustable = is_adjustable
-        
+
     def get_furniture_type(self):
         return "Chair"
-        
+
     def calculate_discount(self, discount_percentage):
-        """Calculate discount for chairs. 
+        """Calculate discount for chairs.
         Adjustable chairs get an additional 5% discount."""
         base_discount = self.price * (discount_percentage / 100)
         if self.is_adjustable:
@@ -129,17 +177,17 @@ class Chair(Furniture):
 
 class Table(Furniture):
     """Table furniture type."""
-    
+
     def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url,
                  shape="Rectangle", max_weight_capacity=200, is_extendable=False):
         super().__init__(name, description, price, dimensions, stock_quantity, category_id, image_url)
         self.shape = shape
         self.max_weight_capacity = max_weight_capacity
         self.is_extendable = is_extendable
-        
+
     def get_furniture_type(self):
         return "Table"
-        
+
     def calculate_discount(self, discount_percentage):
         """Calculate discount for tables.
         Extendable tables get an additional 3% discount."""
@@ -152,17 +200,17 @@ class Table(Furniture):
 
 class Sofa(Furniture):
     """Sofa furniture type."""
-    
+
     def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url,
                  seats=3, is_convertible=False, has_storage=False):
         super().__init__(name, description, price, dimensions, stock_quantity, category_id, image_url)
         self.seats = seats
         self.is_convertible = is_convertible
         self.has_storage = has_storage
-        
+
     def get_furniture_type(self):
         return "Sofa"
-        
+
     def calculate_discount(self, discount_percentage):
         """Calculate discount for sofas.
         Convertible sofas get an additional 7% discount."""
@@ -175,17 +223,17 @@ class Sofa(Furniture):
 
 class Bed(Furniture):
     """Bed furniture type."""
-    
+
     def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url,
                  size="Queen", has_storage=False, material_type="Wood"):
         super().__init__(name, description, price, dimensions, stock_quantity, category_id, image_url)
         self.size = size
         self.has_storage = has_storage
         self.material_type = material_type
-        
+
     def get_furniture_type(self):
         return "Bed"
-        
+
     def calculate_discount(self, discount_percentage):
         """Calculate discount for beds.
         Storage beds get an additional 4% discount."""
@@ -198,17 +246,17 @@ class Bed(Furniture):
 
 class Cabinet(Furniture):
     """Cabinet furniture type."""
-    
+
     def __init__(self, name, description, price, dimensions, stock_quantity, category_id, image_url,
                  num_drawers=0, num_shelves=0, has_lock=False):
         super().__init__(name, description, price, dimensions, stock_quantity, category_id, image_url)
         self.num_drawers = num_drawers
         self.num_shelves = num_shelves
         self.has_lock = has_lock
-        
+
     def get_furniture_type(self):
         return "Cabinet"
-        
+
     def calculate_discount(self, discount_percentage):
         """Calculate discount for cabinets.
         Cabinets with locks get an additional 2% discount."""
@@ -222,7 +270,7 @@ class Cabinet(Furniture):
 # Factory Pattern implementation
 class FurnitureFactory:
     """Factory class for creating furniture objects."""
-    
+
     @staticmethod
     def create_furniture(furniture_type, name, description, price, dimensions, stock_quantity, category_id, image_url, additional_data=None):
         """Create and return a furniture object based on the type."""
