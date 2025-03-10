@@ -3,7 +3,7 @@ from app.db import execute_query
 
 class OrderItem:
     """Class representing items within an order."""
-    
+
     def __init__(self, order_id, product_id, quantity, price):
         self.order_id = order_id
         self.product_id = product_id
@@ -35,7 +35,7 @@ class OrderItem:
         query = "DELETE FROM OrderItems WHERE OrderItemID = ?"
         execute_query(query, (order_item_id,))
         print(f"Order item #{order_item_id} deleted successfully.")
-    
+
     @staticmethod
     def get_order_item(order_item_id):
         """Get an order item by ID."""
@@ -46,11 +46,11 @@ class OrderItem:
         WHERE oi.OrderItemID = ?
         """
         result = execute_query(query, (order_item_id,), fetch=True)
-        
+
         if result:
             return result[0]
         return None
-    
+
     @staticmethod
     def get_items_by_order(order_id):
         """Get all items for an order."""
@@ -61,7 +61,7 @@ class OrderItem:
         WHERE oi.OrderID = ?
         """
         return execute_query(query, (order_id,), fetch=True)
-    
+
     @staticmethod
     def calculate_order_total(order_id):
         """Calculate the total price of all items in an order."""
@@ -71,7 +71,7 @@ class OrderItem:
         WHERE OrderID = ?
         """
         result = execute_query(query, (order_id,), fetch=True)
-        
+
         if result and result[0][0]:
             return result[0][0]
         return 0
