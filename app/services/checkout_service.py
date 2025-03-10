@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from app.services import CartService
+from app.services.order_service  import CartService
 from app.models import Order
 from app.models import OrderItem
 from app.models import Furniture
@@ -9,7 +9,7 @@ from app.db import execute_query
 # Observer Pattern for order notifications
 class OrderObserver(ABC):
     """Abstract base class for order observers."""
-    
+
     @abstractmethod
     def update(self, order_id, user_id, total_amount, status):
         """Update method called when order status changes."""
@@ -18,13 +18,13 @@ class OrderObserver(ABC):
 
 class EmailNotification(OrderObserver):
     """Send email notifications for order updates."""
-    
+
     def update(self, order_id, user_id, total_amount, status):
         """Send email notification to user."""
         # In a real application, this would send an actual email
         print(f"Sending email notification to user {user_id} about order {order_id}.")
         print(f"Order status: {status}, Total amount: {total_amount}")
-        
+
         # Mock implementation - in reality would use an email service
         query = """
         INSERT INTO Notifications (UserID, OrderID, Message, CreatedAt)
@@ -36,34 +36,34 @@ class EmailNotification(OrderObserver):
 
 class InventoryUpdate(OrderObserver):
     """Update inventory when order status changes."""
-    
+
     def update(self, order_id, user_id, total_amount, status):
         """Update inventory based on order status."""
         if status == "confirmed":
             # Get order items
             query = "SELECT * FROM OrderItems WHERE OrderID = ?"
             order_items = execute_query(query, (order_id,), fetch=True)
-            
+
             # Update inventory for each item
             for item in order_items:
                 product_id = item['ProductID']
                 quantity = item['Quantity']
                 Furniture.update_stock(product_id, quantity)
-                
+
             print(f"Inventory updated for order {order_id}")
 
 
 class OrderSubject:
     """Subject class for the Observer pattern."""
-    
+
     _observers = []
-    
+
     @classmethod
     def attach(cls, observer):
         """Attach an observer."""
         if observer not in cls._observers:
             cls._observers.append(observer)
-    
+
     @classmethod
     def detach(cls, observer):
         """Detach an observer."""
@@ -71,7 +71,7 @@ class OrderSubject:
             cls._observers.remove(observer)
         except ValueError:
             pass
-    
+
     @classmethod
     def notify(cls, order_id, user_id, total_amount, status):
         """Notify all observers about order update."""
@@ -81,13 +81,13 @@ class OrderSubject:
 
 class CheckoutService:
     """Service for processing checkout operations."""
-    
+
     def __init__(self):
         """Initialize checkout service and attach observers."""
         # Attach observers for order notifications
         OrderSubject.attach(EmailNotification())
         OrderSubject.attach(InventoryUpdate())
-    
+
     @staticmethod
     def checkout(user_id):
         """Process checkout for a user's cart."""
@@ -123,13 +123,13 @@ class CheckoutService:
         CartService.clear_cart(user_id)
 
         return f"✅ Checkout completed successfully. Total amount: {total_amount}."
-    
+
     @staticmethod
     def process_payment(order_id, payment_method, payment_details):
         """Process payment for an order."""
         # This would connect to a payment gateway in a real application
         # For this implementation, we'll just update the order status
-        
+
         # Update order status to "paid"
         query = """
         UPDATE Orders
@@ -137,21 +137,21 @@ class CheckoutService:
         WHERE OrderID = ?
         """
         execute_query(query, (payment_method, order_id))
-        
+
         # Get order details for notification
         query = "SELECT * FROM Orders WHERE OrderID = ?"
         order_result = execute_query(query, (order_id,), fetch=True)
-        
+
         if not order_result:
             return "⚠️ Order not found."
-            
+
         order = order_result[0]
-        
+
         # Notify observers about payment
         OrderSubject.notify(order_id, order['UserID'], order['TotalAmount'], "paid")
-        
+
         return f"✅ Payment processed successfully for order {order_id}."
-    
+
     @staticmethod
     def update_order_status(order_id, new_status):
         """Update order status and notify observers."""
@@ -162,27 +162,27 @@ class CheckoutService:
         WHERE OrderID = ?
         """
         execute_query(query, (new_status, order_id))
-        
+
         # Get order details for notification
         query = "SELECT * FROM Orders WHERE OrderID = ?"
         order_result = execute_query(query, (order_id,), fetch=True)
-        
+
         if not order_result:
             return "⚠️ Order not found."
-            
+
         order = order_result[0]
-        
+
         # Notify observers about status change
         OrderSubject.notify(order_id, order['UserID'], order['TotalAmount'], new_status)
-        
+
         return f"✅ Order {order_id} status updated to {new_status}."
-    
+
     @staticmethod
     def get_order_by_user(user_id):
         """Get all orders for a user."""
         query = "SELECT * FROM Orders WHERE UserID = ? ORDER BY CreatedAt DESC"
         return execute_query(query, (user_id,), fetch=True)
-    
+
     @staticmethod
     def get_order_by_id(order_id):
         """Get order details by ID."""
