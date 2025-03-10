@@ -27,7 +27,7 @@ class Category:
         query = "DELETE FROM Categories WHERE CategoryID = ?"
         execute_query(query, (category_id,))
         print(f"Category deleted successfully.")
-        
+
     @staticmethod
     def get_category_by_id(category_id):
         """Get category by ID."""
@@ -36,7 +36,7 @@ class Category:
         if result:
             return result[0]
         return None
-        
+
     @staticmethod
     def get_all_categories():
         """Get all categories."""
