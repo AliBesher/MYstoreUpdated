@@ -4,7 +4,7 @@ from app import create_app
 class TestCheckoutRoutes(unittest.TestCase):
 
     def setUp(self):
-        # إعداد التطبيق والعميل للاختبارات
+        # Set up the application and client for testing
         app = create_app()
         app.testing = True
         self.client = app.test_client()
@@ -17,16 +17,16 @@ class TestCheckoutRoutes(unittest.TestCase):
         # Step 2: Send checkout request
         response = self.client.post('/api/checkout', json={"user_id": 1})
 
-        # Debugging: طباعة حالة الاستجابة والبيانات المسترجعة
+        # Debugging: Print response status and retrieved data
         print(f"Response Status: {response.status_code}")
         print(f"Response Data: {response.get_json()}")
 
-        # Assertions: التحقق من أن الحالة هي 200 وأن الرسالة تحتوي على "Checkout completed successfully"
+        # Assertions: Verify that the status is 200 and the message contains "Checkout completed successfully"
         self.assertEqual(response.status_code, 200)
         self.assertIn("Checkout completed successfully", response.get_json().get("message", ""))
 
     def test_process_payment(self):
-        # إرسال بيانات الدفع
+        # Send payment data
         data = {
             "order_id": 1,
             "payment_method": "credit_card",
@@ -34,7 +34,7 @@ class TestCheckoutRoutes(unittest.TestCase):
         }
         response = self.client.post('/api/checkout/payment', json=data)
 
-        # التحقق من أن الطلب تم بنجاح
+        # Verify that the request was successful
         self.assertEqual(response.status_code, 200)
         self.assertIn("Payment processed successfully", response.get_json().get("message", ""))
 
