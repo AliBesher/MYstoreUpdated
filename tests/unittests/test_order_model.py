@@ -6,91 +6,91 @@ class TestOrderModel(unittest.TestCase):
 
     @patch('app.models.order.execute_query')
     def test_add_order_success(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام مع معرف الطلب المدرج
+        # Simulate query result with order ID included
         mock_execute_query.return_value = [(1,)]
 
-        # إنشاء كائن الطلب وإضافته
+        
         order = Order(1, 500, "pending")
         order_id = order.add_order()
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+        
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو لإدراج طلب جديد
+        
         self.assertIn("INSERT INTO Orders", call_args[0])
 
-        # التحقق من أن معلمات الاستعلام تحتوي على بيانات الطلب
+        # Verify that the query parameters contain the request data.
         params = call_args[1]
-        self.assertEqual(params[0], 1)  # معرف المستخدم
-        self.assertEqual(params[1], 500)  # المبلغ الإجمالي
-        self.assertEqual(params[2], "pending")  # الحالة
+        self.assertEqual(params[0], 1)  
+        self.assertEqual(params[1], 500)  
+        self.assertEqual(params[2], "pending")  
 
-        # التحقق من النتيجة
+       
         self.assertEqual(order_id, 1)
 
     @patch('app.models.order.execute_query')
     def test_add_order_no_result(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام بدون أي نتائج
+        # Simulate query result without any results
         mock_execute_query.return_value = []
 
-        # إنشاء كائن الطلب وإضافته
+        
         order = Order(1, 500, "pending")
         order_id = order.add_order()
 
-        # التحقق من استدعاء execute_query
+     
         mock_execute_query.assert_called_once()
 
-        # التحقق من النتيجة
+        
         self.assertIsNone(order_id)
 
     @patch('app.models.order.execute_query')
     def test_update_order(self, mock_execute_query):
-        # محاكاة تنفيذ الاستعلام
+        
         mock_execute_query.return_value = None
 
-        # إنشاء كائن الطلب وتحديثه
+        
         order = Order(1, 600, "shipped")
         order.update_order(1)
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+        # Verify that execute_query is called with the correct parameters.
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو لتحديث طلب
+        
         self.assertIn("UPDATE Orders", call_args[0])
 
-        # التحقق من أن معلمات الاستعلام تحتوي على بيانات الطلب المحدثة
+        
         params = call_args[1]
-        self.assertEqual(params[0], "shipped")  # الحالة
-        self.assertEqual(params[1], 600)  # المبلغ الإجمالي
-        self.assertEqual(params[2], 1)  # معرف الطلب
+        self.assertEqual(params[0], "shipped")  
+        self.assertEqual(params[1], 600)  
+        self.assertEqual(params[2], 1)  
 
     @patch('app.models.order.execute_query')
     def test_delete_order(self, mock_execute_query):
-        # محاكاة تنفيذ الاستعلام
+        
         mock_execute_query.return_value = None
 
-        # إنشاء كائن الطلب وحذفه
+        
         order = Order(1, 500, "pending")
         order.delete_order(1)
 
-        # التحقق من أن execute_query تم استدعاؤها مرتين (مرة لحذف العناصر ومرة لحذف الطلب)
+        
         self.assertEqual(mock_execute_query.call_count, 2)
 
-        # التحقق من الاستدعاء الأول (حذف عناصر الطلب)
+        
         first_call_args = mock_execute_query.call_args_list[0][0]
         self.assertIn("DELETE FROM OrderItems WHERE OrderID = ?", first_call_args[0])
         self.assertEqual(first_call_args[1], (1,))
 
-        # التحقق من الاستدعاء الثاني (حذف الطلب)
+       
         second_call_args = mock_execute_query.call_args_list[1][0]
         self.assertIn("DELETE FROM Orders WHERE OrderID = ?", second_call_args[0])
         self.assertEqual(second_call_args[1], (1,))
 
     @patch('app.models.order.execute_query')
     def test_get_order_by_id(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام
+        
         mock_execute_query.return_value = [{
             "OrderID": 1,
             "UserID": 1,
@@ -100,18 +100,18 @@ class TestOrderModel(unittest.TestCase):
             "UserEmail": "test@example.com"
         }]
 
-        # استدعاء دالة الحصول على الطلب بواسطة المعرف
+        # Call the get request function by id
         order = Order.get_order_by_id(1)
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+        
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو للبحث عن طلب
+        
         self.assertIn("SELECT o.*, u.Name as UserName, u.Email as UserEmail", call_args[0])
         self.assertEqual(call_args[1], (1,))
 
-        # التحقق من النتيجة
+        
         self.assertEqual(order["OrderID"], 1)
         self.assertEqual(order["TotalAmount"], 500)
         self.assertEqual(order["Status"], "pending")
@@ -119,21 +119,20 @@ class TestOrderModel(unittest.TestCase):
 
     @patch('app.models.order.execute_query')
     def test_get_order_by_id_not_found(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام لطلب غير موجود
+       
         mock_execute_query.return_value = []
 
-        # استدعاء دالة الحصول على الطلب بواسطة المعرف
+        
         order = Order.get_order_by_id(999)
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
         mock_execute_query.assert_called_once()
 
-        # التحقق من النتيجة
+       
         self.assertIsNone(order)
 
     @patch('app.models.order.execute_query')
     def test_get_order_items(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام
+       
         mock_execute_query.return_value = [
             {
                 "OrderItemID": 1,
@@ -157,18 +156,18 @@ class TestOrderModel(unittest.TestCase):
             }
         ]
 
-        # استدعاء دالة الحصول على عناصر الطلب
+        # Call the function to get the request elements
         items = Order.get_order_items(1)
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+        
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو للحصول على عناصر الطلب
+        
         self.assertIn("SELECT oi.*, p.Name as ProductName, p.ImageURL as ProductImage", call_args[0])
         self.assertEqual(call_args[1], (1,))
 
-        # التحقق من النتيجة
+        
         self.assertEqual(len(items), 2)
         self.assertEqual(items[0]["ProductName"], "Chair")
         self.assertEqual(items[1]["ProductName"], "Table")
@@ -177,7 +176,7 @@ class TestOrderModel(unittest.TestCase):
 
     @patch('app.models.order.execute_query')
     def test_get_orders_by_user(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام
+     
         mock_execute_query.return_value = [
             {
                 "OrderID": 1,
@@ -195,18 +194,17 @@ class TestOrderModel(unittest.TestCase):
             }
         ]
 
-        # استدعاء دالة الحصول على طلبات المستخدم
+       
         orders = Order.get_orders_by_user(1)
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+       
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو للحصول على طلبات المستخدم
         self.assertIn("SELECT o.*, COUNT(oi.OrderItemID) as ItemCount", call_args[0])
         self.assertEqual(call_args[1], (1,))
 
-        # التحقق من النتيجة
+        
         self.assertEqual(len(orders), 2)
         self.assertEqual(orders[0]["OrderID"], 1)
         self.assertEqual(orders[1]["OrderID"], 2)
@@ -217,7 +215,7 @@ class TestOrderModel(unittest.TestCase):
 
     @patch('app.models.order.execute_query')
     def test_get_orders_by_status(self, mock_execute_query):
-        # محاكاة نتيجة الاستعلام
+        
         mock_execute_query.return_value = [
             {
                 "OrderID": 1,
@@ -235,18 +233,18 @@ class TestOrderModel(unittest.TestCase):
             }
         ]
 
-        # استدعاء دالة الحصول على الطلبات حسب الحالة
+        
         orders = Order.get_orders_by_status("pending")
 
-        # التحقق من استدعاء execute_query بالمعلمات الصحيحة
+       
         mock_execute_query.assert_called_once()
         call_args = mock_execute_query.call_args[0]
 
-        # التحقق من أن الاستعلام SQL هو للحصول على الطلبات حسب الحالة
+        
         self.assertIn("SELECT o.*, u.Name as UserName", call_args[0])
         self.assertEqual(call_args[1], ("pending",))
 
-        # التحقق من النتيجة
+       
         self.assertEqual(len(orders), 2)
         self.assertEqual(orders[0]["OrderID"], 1)
         self.assertEqual(orders[1]["OrderID"], 3)
@@ -257,19 +255,19 @@ class TestOrderModel(unittest.TestCase):
 
     @patch('app.models.order.execute_query')
     def test_update_order_status(self, mock_execute_query):
-        # محاكاة تنفيذ الاستعلامات المتعددة
+       
         mock_execute_query.side_effect = [
-            None,  # نتيجة استعلام UPDATE
-            [{"OrderID": 1, "UserID": 1, "TotalAmount": 400}]  # نتيجة استعلام SELECT
+            None,  
+            [{"OrderID": 1, "UserID": 1, "TotalAmount": 400}] 
         ]
 
-        # استدعاء دالة تحديث حالة الطلب
+       
         Order.update_order_status(1, "shipped")
 
-        # التحقق من أن execute_query تم استدعاؤه مرتين
+        # Check that execute_query is called twice.
         self.assertEqual(mock_execute_query.call_count, 2)
 
-        # التحقق من الاستدعاء الأول (تحديث حالة الطلب)
+        
         first_call_args = mock_execute_query.call_args_list[0][0]
         self.assertIn("UPDATE Orders", first_call_args[0])
         self.assertEqual(first_call_args[1], ("shipped", 1))
