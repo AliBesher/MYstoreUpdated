@@ -11,7 +11,7 @@ def checkout():
 
     # Initialize checkout service
     checkout_service = CheckoutService()
-    
+
     # Process checkout
     result = checkout_service.checkout(user_id)
     if "⚠️" in result:  # If there's an error
@@ -29,7 +29,7 @@ def process_payment():
 
     # Initialize checkout service
     checkout_service = CheckoutService()
-    
+
     # Process payment
     result = checkout_service.process_payment(order_id, payment_method, payment_details)
     if "⚠️" in result:  # If there's an error
