@@ -11,11 +11,12 @@ def execute_query(query, params=None, fetch=False):
                     cursor.execute(query)
 
                 if fetch:
-                    # تحويل الصفوف إلى قواميس
+                    # Convert rows to dictionaries
                     columns = [column[0] for column in cursor.description]
                     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
                 connection.commit()
     except pyodbc.Error as e:
-        print(f"خطأ أثناء تنفيذ الاستعلام: {e}")
+        print(f"Error while executing query: {e}")
         return None
+
