@@ -3,16 +3,22 @@ from app.services import CartService, PercentageDiscount, BuyOneGetOneDiscount, 
 
 cart_routes = Blueprint('cart_routes', __name__)
 
-# View cart
+# View cart contents
 @cart_routes.route('/cart', methods=['GET'])
 def view_cart():
-    user_id = request.args.get('user_id')  # Get user_id from query parameter
+    user_id = request.args.get('user_id')
+
+    # Check if user_id exists
+    if not user_id:
+        return jsonify({"message": "⚠️ User ID is required."}), 400
+
+    # Call cart service
     cart_items = CartService.get_cart_items(user_id)
 
     if not cart_items:
         return jsonify({"message": "⚠️ No items in the cart."}), 404
 
-    # Calculate cart total
+    # Calculate total amount
     cart_total = CartService.calculate_cart_total(user_id)
 
     return jsonify({
@@ -20,43 +26,69 @@ def view_cart():
         "cart_total": cart_total
     }), 200
 
-# Add to cart
+# Add item to cart
 @cart_routes.route('/cart', methods=['POST'])
 def add_to_cart():
     data = request.get_json()
-    user_id = data.get('user_id')
-    product_id = data.get('product_id')
-    quantity = data.get('quantity', 1)  # Default to 1 if not specified
 
-    result = CartService.add_to_cart(user_id, product_id, quantity)
-    return jsonify({"message": result}), 201
+    # Validate data
+    if not data or 'user_id' not in data or 'product_id' not in data or 'quantity' not in data:
+        return jsonify({"message": "⚠️ Invalid data. Missing required fields."}), 400
 
-# Update cart item quantity
+    # Call cart service
+    try:
+        result = CartService.add_to_cart(data['user_id'], data['product_id'], data['quantity'])
+        return jsonify({"message": result}), 201
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+
+# Update item quantity in cart
 @cart_routes.route('/cart/<int:product_id>', methods=['PUT'])
 def update_cart(product_id):
     data = request.get_json()
-    user_id = data.get('user_id')
-    new_quantity = data.get('quantity')
 
-    result = CartService.update_cart(user_id, product_id, new_quantity)
-    return jsonify({"message": result}), 200
+    # Validate data
+    if not data or 'user_id' not in data or 'quantity' not in data:
+        return jsonify({"message": "⚠️ Invalid data. Missing required fields."}), 400
 
-# Remove from cart
+    # Validate quantity
+    if data['quantity'] <= 0:
+        return jsonify({"message": "⚠️ Quantity must be positive."}), 400
+
+    # Call cart service
+    try:
+        result = CartService.update_cart(data['user_id'], product_id, data['quantity'])
+        return jsonify({"message": result}), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+
+# Remove item from cart
 @cart_routes.route('/cart/<int:product_id>', methods=['DELETE'])
 def remove_from_cart(product_id):
-    data = request.get_json()
-    user_id = data.get('user_id')
+    user_id = request.json.get('user_id')
 
-    result = CartService.remove_from_cart(user_id, product_id)
-    return jsonify({"message": result}), 200
+    # Validate data
+    if not user_id:
+        return jsonify({"message": "⚠️ Invalid data. Missing user_id."}), 400
+
+    # Call cart service
+    try:
+        result = CartService.remove_from_cart(user_id, product_id)
+        return jsonify({"message": result}), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 404
 
 # Clear cart
 @cart_routes.route('/cart/clear', methods=['POST'])
 def clear_cart():
     data = request.get_json()
-    user_id = data.get('user_id')
 
-    result = CartService.clear_cart(user_id)
+    # Validate data
+    if not data or 'user_id' not in data:
+        return jsonify({"message": "⚠️ Invalid data. Missing required fields."}), 400
+
+    # Call cart service
+    result = CartService.clear_cart(data['user_id'])
     return jsonify({"message": result}), 200
 
 # Apply discount
@@ -65,9 +97,9 @@ def apply_discount():
     data = request.get_json()
     user_id = data.get('user_id')
     discount_type = data.get('discount_type')
-    
+
     discount_strategy = None
-    
+
     if discount_type == 'percentage':
         percentage = data.get('percentage', 10)
         discount_strategy = PercentageDiscount(percentage)
@@ -80,9 +112,9 @@ def apply_discount():
         discount_strategy = BulkDiscount(threshold, percentage)
     else:
         return jsonify({"message": "⚠️ Invalid discount type."}), 400
-    
+
     discount_amount = CartService.apply_discount(user_id, discount_strategy)
-    
+
     return jsonify({
         "message": "Discount applied successfully.",
         "discount_amount": discount_amount
