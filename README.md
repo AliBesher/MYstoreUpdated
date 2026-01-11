@@ -2,12 +2,9 @@
 
 A complete backend API for a furniture e-commerce platform implementing multiple design patterns and following best practices for software development.
 
-## Group Members
+## by
 
 - Ali Besher
-- wessam shjrawi
-- dema
-
 
 ## Project Description
 
